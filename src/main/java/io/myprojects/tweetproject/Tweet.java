@@ -2,7 +2,7 @@ package io.myprojects.tweetproject;
 
 public class Tweet {
 
-    private final int tweetId;
+	private final int tweetId;
     private final int userId;
     private final String publishDate;
     private final String tweetContent;
@@ -40,11 +40,6 @@ public class Tweet {
             this.tweetId = tweetId;
             this.userId = userId;
             this.tweetContent = tweetContent;
-        }
-
-        public TweetBuilder setTweetContent(String tweetContent) {
-            this.tweetContent = tweetContent;
-            return this;
         }
 
         public TweetBuilder setNumOfLikes(int numberNumOfLikes) {
@@ -92,4 +87,34 @@ public class Tweet {
     public String getTweetContent() {
         return tweetContent;
     }
+    
+    @Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + numOfLikes;
+		result = prime * result + ((publishDate == null) ? 0 : publishDate.hashCode());
+		result = prime * result + refTweetId;
+		result = prime * result + ((tweetContent == null) ? 0 : tweetContent.hashCode());
+		result = prime * result + tweetId;
+		result = prime * result + userId;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this.getTweetId() == ((Tweet)obj).getTweetId()) { 
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Tweet [tweetId=" + tweetId + ", userId=" + userId + ", publishDate=" + publishDate + ", tweetContent="
+		        + tweetContent + ", refTweetId=" + refTweetId + ", numOfLikes=" + numOfLikes + "]";
+	}
 }

@@ -1,12 +1,12 @@
 package io.myprojects.tweetproject;
 
 public class TweetStatistic {
-	private final double sumOfLikes;
+	private final long sumOfLikes;
 	private final double likesAverage;
 	private final long likesMedian;
 	private final int tweetCount;
-	private final int maxNumberOfLikes;
-	private final int minNumberOfLikes;
+	private final long maxNumberOfLikes;
+	private final long minNumberOfLikes;
 	private final Tweet mostLikedTweet;
 
 	private final int[] likesPercentiles;
@@ -33,9 +33,65 @@ public class TweetStatistic {
 
 	public int[] getLikesPercentiles() { return likesPercentiles; }
 	
-	public int getMinNumberOfLikes() { return minNumberOfLikes; }
+	public long getMinNumberOfLikes() { return minNumberOfLikes; }
 	
-	public int getMaxNumberOfLikes() { return maxNumberOfLikes; }
+	public long getMaxNumberOfLikes() { return maxNumberOfLikes; }
 	
 	public Tweet getMostLikedTweet() {return mostLikedTweet;}
+	
+	public static class TweetStatisticBuilder {
+		protected long sumOfLikes;
+		protected double likesAverage;
+		protected long likesMedian;
+		protected int tweetCount;
+		protected long maxNumberOfLikes;
+		protected long minNumberOfLikes;
+		protected Tweet mostLikedTweet;
+
+		protected int[] likesPercentiles;
+		
+		public TweetStatisticBuilder() { super(); }
+		
+		public TweetStatisticBuilder setSumOfLikes(long sumOfLikes) {
+			this.sumOfLikes = sumOfLikes;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setLikesAverage(double likesAverage) {
+			this.likesAverage = likesAverage;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setLikesMedian(long likesMedian) {
+			this.likesMedian = likesMedian;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setLikesPercentiles(int[] likesPercentiles) {
+			this.likesPercentiles = likesPercentiles;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setTweetCount(int tweetCount) {
+			this.tweetCount = tweetCount;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setMaxNumberOfLikes(long maxNumberOfLikes) {
+			this.maxNumberOfLikes = maxNumberOfLikes;
+			return this;
+		}
+
+		public TweetStatisticBuilder setMinNumberOfLikes(long minNumberOfLikes) {
+			this.minNumberOfLikes = minNumberOfLikes;
+			return this;
+		}
+		
+		public TweetStatisticBuilder setMostLikedTweet(Tweet mostLikedTweet) {
+			this.mostLikedTweet = mostLikedTweet;
+			return this;
+		}
+		
+	    public TweetStatistic build() {	return new TweetStatistic(this); }
+	}
 }

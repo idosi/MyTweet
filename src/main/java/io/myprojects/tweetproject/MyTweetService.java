@@ -1,13 +1,12 @@
 package io.myprojects.tweetproject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,19 +14,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class MyTweetService implements TweetService {
 
-    private Map<Integer,Tweet> tweetMap;
-    private List<Tweet> tweetArray;
+    private Map<Integer,Tweet> tweetMap = new HashMap<Integer, Tweet>();
     private TweetStatistic tweetStat;
     private final Comparator<Tweet> comp = (t1, t2) -> Integer.compare( t1.getNumOfLikes(), t2.getNumOfLikes());
     
 	@Value("${base.module.likesPercentileArray}")
 	private String[] likesPercentileArray;
+    
 
 	public int getTweetCount() {
-        if (tweetMap != null){
-            return tweetMap.size();
-        }
-        return 0;
+        return tweetMap.size();
     }
 
     public Tweet getTweet(int tweetId) {
@@ -38,50 +34,31 @@ public class MyTweetService implements TweetService {
     }
 
     public void addTweet(Tweet tweet) {
-        if (tweetMap == null){
-            tweetMap = new HashMap<Integer,Tweet>();
-        }
     	if(tweetMap.containsKey(tweet.getTweetId())){
     		return;
     	}
-    	
-        if (tweetArray == null){
-        	tweetArray = new ArrayList<Tweet>();
-        }
-    	tweetMap.put(tweet.getTweetId(),tweet);
-    	tweetArray.add(tweet);
+    	tweetMap.put(tweet.getTweetId(), tweet);
     }
 
     public void addTweets(Collection<Tweet> tweets) {
-    	if (tweetMap == null){
-    		 tweetMap = new HashMap<Integer,Tweet>();
-    	}
-        if (tweetArray == null)
-        {
-        	tweetArray = new ArrayList<Tweet>();
-        }
     	for(Tweet tweet : tweets){
-        	if(tweetMap.containsKey(tweet.getTweetId())){
-        		continue;
-        	}
-			 tweetMap.put(tweet.getTweetId(),tweet);
-			 tweetArray.add(tweet);
+    		addTweet(tweet);
 		}
     }
 
 	public TweetStatistic getStats() {
-		if ((tweetArray == null ||tweetArray.isEmpty()) 
-				&& (tweetMap == null || tweetMap.isEmpty())){
+		if (tweetMap.isEmpty()){
 			return null;
 		}
-		double sumOfLikes = getSumOfLikes(tweetArray);
-		double likesAvg = getAvgOfLikes(tweetMap, tweetArray);
-		long likesMedian = getLikesMedian(tweetArray);
-		int minNumberOfLikes = getMinNumberOfLikes(tweetArray);
-		int maxNumberOfLikes = getMaxNumberOfLikes(tweetArray);
-		Tweet mostLikedTweet = getMostLikedTweet(tweetArray);
-		int[] likesPercentiles = getLikesPercentiles(tweetArray);
-		tweetStat = new TweetStatisticBuilder()
+		
+		long sumOfLikes = getSumOfLikes(tweetMap.values());
+		double likesAvg = getAvgOfLikes(tweetMap.values());
+		long likesMedian = getLikesMedian(tweetMap.values());
+		long minNumberOfLikes = getMinNumberOfLikes(tweetMap.values());
+		long maxNumberOfLikes = getMaxNumberOfLikes(tweetMap.values());
+		Tweet mostLikedTweet = getMostLikedTweet(tweetMap.values());
+		int[] likesPercentiles = getLikesPercentiles(tweetMap.values());
+		tweetStat = new TweetStatistic.TweetStatisticBuilder()
 				.setSumOfLikes(sumOfLikes)
 				.setLikesAverage(likesAvg)
 				.setLikesMedian(likesMedian)
@@ -94,27 +71,27 @@ public class MyTweetService implements TweetService {
 		return tweetStat;
 	}
 	
-	private Tweet getMostLikedTweet(List<Tweet> localTweetArray) {		
+	private Tweet getMostLikedTweet(Collection<Tweet> localTweetArray) {		
 		return getTweet(localTweetArray.stream().max(comp).get().getTweetId());
 	}
 
-	private int getMaxNumberOfLikes(List<Tweet> localTweetArray) {
+	private int getMaxNumberOfLikes(Collection<Tweet> localTweetArray) {
 		return localTweetArray.stream().max(comp).get().getNumOfLikes();
 	}
 
-	private int getMinNumberOfLikes(List<Tweet> localTweetArray) {
+	private int getMinNumberOfLikes(Collection<Tweet> localTweetArray) {
 		return localTweetArray.stream().min(comp).get().getNumOfLikes();
 	}
 
-	private double getAvgOfLikes(Map<Integer, Tweet> localTweetMap, List<Tweet> localTweetArray) {
+	private double getAvgOfLikes(Collection<Tweet> localTweetArray) {
 		return localTweetArray.stream().mapToDouble(l -> l.getNumOfLikes()).average().getAsDouble();
 	}
 	
-	private long getSumOfLikes(List<Tweet> localTweetArray) {
+	private long getSumOfLikes(Collection<Tweet> localTweetArray) {
 		return localTweetArray.stream().mapToLong(l -> l.getNumOfLikes()).sum();
 	}
 
-	private long getLikesMedian(List<Tweet> localTweetArray) {
+	private long getLikesMedian(Collection<Tweet> localTweetArray) {
 		long medianValue;
 		Integer [] likesArray = getLikesArrayFromTweetList(localTweetArray);
 		Arrays.sort(likesArray);
@@ -128,11 +105,11 @@ public class MyTweetService implements TweetService {
 		}
 	}
 
-	private Integer[] getLikesArrayFromTweetList(List<Tweet> tweetList) {		
+	private Integer[] getLikesArrayFromTweetList(Collection<Tweet> tweetList) {		
 		return tweetList.stream().map(tweet-> tweet.getNumOfLikes()).toArray(Integer[]::new);
 	}
 
-	private int[] getLikesPercentiles(List<Tweet> localTweetArray) {		
+	private int[] getLikesPercentiles(Collection<Tweet> localTweetArray) {		
 		Integer [] likesArray = getLikesArrayFromTweetList(localTweetArray);
 		Double[] likesPercentiles = getDoubleArray(likesPercentileArray);
 		int[] likesPercentilesResult = percentiles(likesArray, likesPercentiles);
@@ -155,32 +132,20 @@ public class MyTweetService implements TweetService {
 	}
 
 	public TweetStatistic getStats(int userId) {
-		 Map<Integer,Tweet> tempTweetMap = new HashMap<Integer,Tweet>();
-		 List<Tweet> tempTweetArray = new ArrayList<Tweet>();
-		 
-		for(Tweet tweet : tweetArray) {
-			if (userId == tweet.getUserId()) {
-				tempTweetMap.put(tweet.getTweetId(), tweet);
-				tempTweetArray.add(tweet);
-			}
-		}
-
-		if (tempTweetArray.isEmpty())
-		{
-			return null;
-		}
-		return getStat(tempTweetMap, tempTweetArray);
+		Map<Integer, Tweet> userTweetsMap = tweetMap.values().stream().filter(x -> userId == x.getUserId())
+				.collect(Collectors.toMap(Tweet::getTweetId, Function.identity()));
+		return getStat(userTweetsMap);
 	}
 	
-	private TweetStatistic getStat(Map<Integer, Tweet> tempTweetMap, List<Tweet> tempTweetArray) {
-		double sumOfLikes = getSumOfLikes(tempTweetArray);
-		double likesAvg = getAvgOfLikes(tempTweetMap, tempTweetArray);
-		long likesMedian = getLikesMedian(tempTweetArray);
-		int minNumberOfLikes = getMinNumberOfLikes(tempTweetArray);
-		int maxNumberOfLikes = getMaxNumberOfLikes(tempTweetArray);
-		Tweet mostLikedTweet = getMostLikedTweet(tempTweetArray);
-		int[] likesPercentiles = getLikesPercentiles(tempTweetArray);
-		tweetStat = new TweetStatisticBuilder()
+	private TweetStatistic getStat(Map<Integer, Tweet> tempTweetMap) {
+		long sumOfLikes = getSumOfLikes(tempTweetMap.values());
+		double likesAvg = getAvgOfLikes(tempTweetMap.values());
+		long likesMedian = getLikesMedian(tempTweetMap.values());
+		long minNumberOfLikes = getMinNumberOfLikes(tempTweetMap.values());
+		long maxNumberOfLikes = getMaxNumberOfLikes(tempTweetMap.values());
+		Tweet mostLikedTweet = getMostLikedTweet(tempTweetMap.values());
+		int[] likesPercentiles = getLikesPercentiles(tempTweetMap.values());
+		tweetStat = new TweetStatistic.TweetStatisticBuilder()
 				.setSumOfLikes(sumOfLikes)
 				.setLikesAverage(likesAvg)
 				.setLikesMedian(likesMedian)
@@ -195,6 +160,5 @@ public class MyTweetService implements TweetService {
 
 	public void clear() {
 		tweetMap.clear();
-		tweetArray.clear();
 	}
 }

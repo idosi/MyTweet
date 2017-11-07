@@ -48,7 +48,7 @@ public class MyTweetTest
 		tb.setNumOfLikes(10);
 		tb.setPublishDate("12/12/2012");
 		controller.addTweet(tb.build());
-		assertEquals(10, controller.getStats().getMaxNumberOfLikes());
+		assertEquals(10, controller.getStats().getMinNumberOfLikes());
 		assertEquals(10, controller.getStats().getMaxNumberOfLikes());
 		assertEquals(101, controller.getStats().getMostLikedTweet().getTweetId());
 	}
